@@ -41,6 +41,8 @@ namespace BidUp_App
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
+            DatabaseHelper dbHelper = new DatabaseHelper();
+
             // Get the input values from the fields
             string fullName = FullNameTextBox.Text;  // Assuming FullNameTextBox is your input field name
             string email = EmailTextBox.Text;
@@ -73,51 +75,33 @@ namespace BidUp_App
             string role = (RoleComboBox.SelectedItem as ComboBoxItem).Content.ToString();
 
             // Hash the password
-            string passwordHash = DatabaseHelper.HashPassword(password);
+            string passwordHash = dbHelper.HashPassword(password);
 
-            // SQL query for inserting new user
-            string query = "INSERT INTO Users (FullName, PasswordHash, Role, Email, BirthDate, CreatedAt) " +
-                           "VALUES (@FullName, @PasswordHash, @Role, @Email, @BirthDate, GETDATE())";
+            // Default profile picture path
+            string defaultProfilePicturePath = @"C:\Users\Florea\source\repos\BidUp-App\Resources\profil2.png";
+
+            // SQL query for inserting new user with ProfilePicturePath
+            string query = "INSERT INTO Users (FullName, PasswordHash, Role, Email, BirthDate, ProfilePicturePath, CreatedAt) " +
+                           "VALUES (@FullName, @PasswordHash, @Role, @Email, @BirthDate, @ProfilePicturePath, GETDATE())";
 
             // Define parameters
             SqlParameter[] parameters = {
-            new SqlParameter("@FullName", fullName),
-            new SqlParameter("@PasswordHash", passwordHash),
-            new SqlParameter("@Role", role),
-            new SqlParameter("@Email", email),
-            new SqlParameter("@BirthDate", birthDate.Value)
+                new SqlParameter("@FullName", fullName),
+                new SqlParameter("@PasswordHash", passwordHash),
+                new SqlParameter("@Role", role),
+                new SqlParameter("@Email", email),
+                new SqlParameter("@BirthDate", birthDate.Value),
+                new SqlParameter("@ProfilePicturePath", defaultProfilePicturePath)
             };
 
             // Insert the user into the database
             try
             {
-                DatabaseHelper dbHelper = new DatabaseHelper();
                 int result = dbHelper.ExecuteNonQuery(query, parameters);
 
                 if (result > 0)
                 {
                     MessageBox.Show("Registration successful!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Navigate to the appropriate dashboard based on the role
-                    Window dashboard;
-                    switch (role)
-                    {
-                        case "Bidder":
-                            dashboard = new Views.Bidder.BidderDashboard();
-                            break;
-                        case "Seller":
-                            dashboard = new Views.Seller.SellerDashboard();
-                            break;
-                        case "Admin":
-                            dashboard = new Views.Admin.AdminDashboard();
-                            break;
-                        default:
-                            MessageBox.Show("Invalid role selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                            return;
-                    }
-
-                    dashboard.Show();
-                    this.Close();  // Close the register window
                 }
                 else
                 {

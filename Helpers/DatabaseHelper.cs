@@ -72,7 +72,7 @@ namespace BidUp_App.Helpers
         }
 
         // Optional: Method to hash passwords for secure storage
-        public static string HashPassword(string password)
+        public string HashPassword(string password)
         {
             using (var sha256 = System.Security.Cryptography.SHA256.Create())
             {
@@ -85,5 +85,31 @@ namespace BidUp_App.Helpers
                 return builder.ToString();
             }
         }
+
+
+        public DataRow GetUserByEmailAndPassword(string email, string passwordHash)
+        {
+            using (SqlConnection connection = GetConnection())
+            {
+                string query = "SELECT * FROM Users WHERE Email = @Email AND PasswordHash = @PasswordHash";
+                SqlCommand command = new SqlCommand(query, connection);
+                command.Parameters.AddWithValue("@Email", email);
+                command.Parameters.AddWithValue("@PasswordHash", passwordHash);
+
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataTable userTable = new DataTable();
+                adapter.Fill(userTable);
+
+                if (userTable.Rows.Count > 0)
+                {
+                    return userTable.Rows[0]; // Return the first row (assuming unique email)
+                }
+                else
+                {
+                    return null; // No user found
+                }
+            }
+        }
     }
 }
+

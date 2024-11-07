@@ -1,5 +1,8 @@
 ﻿using BidUp_App.Helpers;
+using BidUp_App.Models.Users;
 using System;
+using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Reflection;
 using System.Windows;
@@ -14,49 +17,45 @@ namespace BidUp_App
             InitializeComponent();
         }
 
+
         private void SignInButton_Click(object sender, RoutedEventArgs e)
         {
-            // Retrieve email and password input
+
+            DatabaseHelper dbHelper = new DatabaseHelper();
             string email = EmailTextBox.Text;
-            string password = PasswordTextBox.Text;  // Assuming PasswordTextBox is a PasswordBox
+            string password = PasswordTextBox.Text;
 
-            // Check if a role has been selected
-            if (RoleComboBox.SelectedIndex <= 0)
+            // Hash the password (assuming you have a method to hash it)
+            string passwordHash = dbHelper.HashPassword(password);
+
+            // Retrieve the user data from the database
+            DataRow userData = dbHelper.GetUserByEmailAndPassword(email, passwordHash);
+
+            if (userData != null)
             {
-                MessageBox.Show("Please select a role.", "Role Required", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+                // Extract the role from the database
+                string role = userData["Role"].ToString();
 
-            // Retrieve the selected role
-            string selectedRole = (RoleComboBox.SelectedItem as ComboBoxItem).Content.ToString();
+                // Use the factory to create the appropriate user object based on the role
+                User user = UserFactory.CreateUser(role);
 
-            // Authenticate the user based on the selected role
-            if (AuthenticateUser(email, password, selectedRole))
-            {
-                // Open the appropriate dashboard based on the selected role
-                Window dashboard;
-                switch (selectedRole)
-                {
-                    case "Bidder":
-                        dashboard = new Views.Bidder.BidderDashboard(); // Make sure BidderDashboard exists in the Bidder namespace
-                        break;
-                    case "Seller":
-                        dashboard = new Views.Seller.SellerDashboard(); // Make sure SellerDashboard exists in the Seller namespace
-                        break;
-                    case "Admin":
-                        dashboard = new Views.Admin.AdminDashboard(); // Make sure AdminDashboard exists in the Admin namespace
-                        break;
-                    default:
-                        MessageBox.Show("Invalid role selected.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                        return;
-                }
+                // Populate the user object with data from the database
+                user.m_userID = Convert.ToInt32(userData["UserID"]);
+                user.m_fullName = userData["FullName"].ToString();
+                user.m_email = userData["Email"].ToString();
+                user.m_BirthDate = Convert.ToDateTime(userData["BirthDate"]);
+                user.ProfilePicturePath = userData["ProfilePicturePath"].ToString();
+                user.m_password = userData["PasswordHash"].ToString();
+                // Display the appropriate dashboard
+                user.displayDasboard();
 
-                dashboard.Show();
-                this.Close(); // Close the sign-in window
+                // Close the SignIn window
+                this.Close();
             }
             else
             {
-                MessageBox.Show("Invalid credentials. Please try again.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Show error if the user is not found
+                MessageBox.Show("Invalid email or password. Please try again.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -67,10 +66,12 @@ namespace BidUp_App
             this.Close();
         }
 
-        private bool AuthenticateUser(string email, string password, string role)
+        private bool AuthenticateUser(string email, string password, string role, DatabaseHelper dbHelper)
         {
             // Hash the password for comparison
-            string passwordHash = DatabaseHelper.HashPassword(password); // Ensure you have HashPassword in DatabaseHelper
+
+
+            string passwordHash = dbHelper.HashPassword(password); // Ensure you have HashPassword in DatabaseHelper
 
             // SQL query to check if the user exists with the provided email, password, and role
             string query = "SELECT COUNT(*) FROM Users WHERE Email = @Email AND PasswordHash = @PasswordHash AND Role = @Role";
@@ -80,7 +81,6 @@ namespace BidUp_App
                 new SqlParameter("@Role", role)
             };
 
-            DatabaseHelper dbHelper = new DatabaseHelper();
             int count = (int)dbHelper.ExecuteScalar(query, parameters);
             return count > 0; // Returns true if user exists with specified role
         }
