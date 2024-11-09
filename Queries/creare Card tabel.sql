@@ -5,5 +5,7 @@
     ExpiryDate DATE NOT NULL,                     -- Expiry date of the card
     CVV NVARCHAR(5) NOT NULL,                     -- CVV code (for demonstration purposes)
     OwnerUserID INT,                              -- Foreign key linking to Users table
+    Balance DECIMAL,
     FOREIGN KEY (OwnerUserID) REFERENCES Users(UserID) ON DELETE CASCADE
 );
+

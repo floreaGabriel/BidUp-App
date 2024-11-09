@@ -1,12 +1,8 @@
-﻿using BidUp_App.Helpers;
+﻿using BidUp_App.Models;
 using BidUp_App.Models.Users;
 using System;
-using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
-using System.Reflection;
+using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace BidUp_App
 {
@@ -17,45 +13,71 @@ namespace BidUp_App
             InitializeComponent();
         }
 
-
         private void SignInButton_Click(object sender, RoutedEventArgs e)
         {
-
-            DatabaseHelper dbHelper = new DatabaseHelper();
             string email = EmailTextBox.Text;
             string password = PasswordTextBox.Text;
 
-            // Hash the password (assuming you have a method to hash it)
-            string passwordHash = dbHelper.HashPassword(password);
-
-            // Retrieve the user data from the database
-            DataRow userData = dbHelper.GetUserByEmailAndPassword(email, passwordHash);
-
-            if (userData != null)
+            using (var context = new DataContextDataContext())
             {
-                // Extract the role from the database
-                string role = userData["Role"].ToString();
+                // Hash the password
+                string passwordHash = HashPassword(password);
 
-                // Use the factory to create the appropriate user object based on the role
-                User user = UserFactory.CreateUser(role);
+                // Retrieve the user from the database using LINQ
+                var dbUser = context.Users.SingleOrDefault(u => u.Email == email && u.PasswordHash == passwordHash);
 
-                // Populate the user object with data from the database
-                user.m_userID = Convert.ToInt32(userData["UserID"]);
-                user.m_fullName = userData["FullName"].ToString();
-                user.m_email = userData["Email"].ToString();
-                user.m_BirthDate = Convert.ToDateTime(userData["BirthDate"]);
-                user.ProfilePicturePath = userData["ProfilePicturePath"].ToString();
-                user.m_password = userData["PasswordHash"].ToString();
-                // Display the appropriate dashboard
-                user.displayDasboard();
+                if (dbUser != null)
+                {
+                    // Create a User object based on the role
+                    BidUp_App.Models.Users.User user = UserFactory.CreateUser(dbUser.Role);
 
-                // Close the SignIn window
-                this.Close();
-            }
-            else
-            {
-                // Show error if the user is not found
-                MessageBox.Show("Invalid email or password. Please try again.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Populate the User object
+                    user.m_userID = dbUser.UserID;
+                    user.m_fullName = dbUser.FullName;
+                    user.m_email = dbUser.Email;
+                    user.m_BirthDate = dbUser.BirthDate;
+                    user.ProfilePicturePath = dbUser.ProfilePicturePath;
+                    user.m_password = dbUser.PasswordHash;
+
+                    // If the user is a Bidder or Seller, load their Card information
+                    if (user is Bidder || user is Seller)
+                    {
+                        var card = context.Cards.SingleOrDefault(c => c.OwnerUserID == dbUser.UserID);
+
+                        if (card != null)
+                        {
+                            BidUp_App.Models.Card userCard = new BidUp_App.Models.Card
+                            {
+                                CardID = card.CardID,
+                                CardNumber = card.CardNumber,
+                                CardHolderName = card.CardHolderName,
+                                ExpiryDate = card.ExpiryDate,
+                                CVV = card.CVV,
+                                Balance = (float)card.Balance
+                            };
+
+                            if (user is BidUp_App.Models.Users.Bidder bidder)
+                            {
+                                bidder.card = userCard;
+                            }
+                            else if (user is Seller seller)
+                            {
+                                seller.card = userCard;
+                            }
+                        }
+                    }
+
+                    // Display the appropriate dashboard based on the user's role
+                    user.displayDasboard();
+
+                    // Close the SignIn window
+                    this.Close();
+                }
+                else
+                {
+                    // Show error if the user is not found
+                    MessageBox.Show("Invalid email or password. Please try again.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -66,23 +88,13 @@ namespace BidUp_App
             this.Close();
         }
 
-        private bool AuthenticateUser(string email, string password, string role, DatabaseHelper dbHelper)
+        private string HashPassword(string password)
         {
-            // Hash the password for comparison
-
-
-            string passwordHash = dbHelper.HashPassword(password); // Ensure you have HashPassword in DatabaseHelper
-
-            // SQL query to check if the user exists with the provided email, password, and role
-            string query = "SELECT COUNT(*) FROM Users WHERE Email = @Email AND PasswordHash = @PasswordHash AND Role = @Role";
-            SqlParameter[] parameters = {
-                new SqlParameter("@Email", email),
-                new SqlParameter("@PasswordHash", passwordHash),
-                new SqlParameter("@Role", role)
-            };
-
-            int count = (int)dbHelper.ExecuteScalar(query, parameters);
-            return count > 0; // Returns true if user exists with specified role
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return BitConverter.ToString(bytes).Replace("-", "").ToLower();
+            }
         }
     }
 }

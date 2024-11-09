@@ -58,6 +58,7 @@
       <HintPath>packages\System.Configuration.ConfigurationManager.8.0.1\lib\net462\System.Configuration.ConfigurationManager.dll</HintPath>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -76,10 +77,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Helpers\DatabaseHelper.cs" />
+    <Compile Include="DataContext.designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DataContext.dbml</DependentUpon>
+    </Compile>
     <Compile Include="Models\Card.cs" />
     <Compile Include="Models\Interfaces\IUser.cs" />
+    <Compile Include="Models\Product.cs" />
     <Compile Include="Models\Users\Admin.cs" />
+    <Compile Include="Models\Users\AuctionViewModel.cs" />
     <Compile Include="Models\Users\Bidder.cs" />
     <Compile Include="Models\Users\Seller.cs" />
     <Compile Include="Models\Users\User.cs" />
@@ -96,8 +103,20 @@
     <Compile Include="Views\Bidder\BidderDashboard.xaml.cs">
       <DependentUpon>BidderDashboard.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Bidder\BidWindow.xaml.cs">
+      <DependentUpon>BidWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Bidder\ViewAuctionsWindowBidder.xaml.cs">
+      <DependentUpon>ViewAuctionsWindowBidder.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Seller\AddAuctionWindow.xaml.cs">
+      <DependentUpon>AddAuctionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Seller\SellerDashboard.xaml.cs">
       <DependentUpon>SellerDashboard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Seller\ViewAuctionsWindow.xaml.cs">
+      <DependentUpon>ViewAuctionsWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -127,7 +146,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\Bidder\BidWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Bidder\ViewAuctionsWindowBidder.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Seller\AddAuctionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Seller\SellerDashboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Seller\ViewAuctionsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -150,6 +185,14 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="DataContext.dbml">
+      <Generator>MSLinqToSQLGenerator</Generator>
+      <LastGenOutput>DataContext.designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="DataContext.dbml.layout">
+      <DependentUpon>DataContext.dbml</DependentUpon>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -176,6 +219,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\profil2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{3259AA49-8AA1-44D3-9025-A0B520596A8C}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Helpers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,5 +1,4 @@
-﻿using BidUp_App.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -41,17 +40,25 @@ namespace BidUp_App
 
         private void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            DatabaseHelper dbHelper = new DatabaseHelper();
-
             // Get the input values from the fields
-            string fullName = FullNameTextBox.Text;  // Assuming FullNameTextBox is your input field name
+            string fullName = FullNameTextBox.Text;
             string email = EmailTextBox.Text;
             string password = PasswordBox.Password;
             string confirmPassword = ConfirmPasswordBox.Password;
             DateTime? birthDate = DateOfBirthPicker.SelectedDate;
+            string role = (RoleComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+
+            // Card information
+            string cardNumber = CardNumberTextBox.Text;
+            string cardHolderName = CardHolderNameTextBox.Text;
+            DateTime? expiryDate = ExpiryDatePicker.SelectedDate;
+            string cvv = CVVTextBox.Text;
+            decimal balance = 0;
 
             // Validate fields
-            if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword) || !birthDate.HasValue)
+            if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) ||
+                string.IsNullOrEmpty(confirmPassword) || !birthDate.HasValue || role == "Select Role" ||
+                string.IsNullOrEmpty(cardNumber) || string.IsNullOrEmpty(cardHolderName) || !expiryDate.HasValue || string.IsNullOrEmpty(cvv))
             {
                 MessageBox.Show("Please fill in all fields.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -64,56 +71,71 @@ namespace BidUp_App
                 return;
             }
 
-            // Check if a role is selected
-            if (RoleComboBox.SelectedIndex <= 0)
-            {
-                MessageBox.Show("Please select a role.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Retrieve selected role
-            string role = (RoleComboBox.SelectedItem as ComboBoxItem).Content.ToString();
-
-            // Hash the password
-            string passwordHash = dbHelper.HashPassword(password);
-
-            // Default profile picture path
+            // Hash the password (you may replace this with your own hash function)
+            string passwordHash = HashPassword(password);
             string defaultProfilePicturePath = @"C:\Users\Florea\source\repos\BidUp-App\Resources\profil2.png";
 
-            // SQL query for inserting new user with ProfilePicturePath
-            string query = "INSERT INTO Users (FullName, PasswordHash, Role, Email, BirthDate, ProfilePicturePath, CreatedAt) " +
-                           "VALUES (@FullName, @PasswordHash, @Role, @Email, @BirthDate, @ProfilePicturePath, GETDATE())";
-
-            // Define parameters
-            SqlParameter[] parameters = {
-                new SqlParameter("@FullName", fullName),
-                new SqlParameter("@PasswordHash", passwordHash),
-                new SqlParameter("@Role", role),
-                new SqlParameter("@Email", email),
-                new SqlParameter("@BirthDate", birthDate.Value),
-                new SqlParameter("@ProfilePicturePath", defaultProfilePicturePath)
-            };
-
-            // Insert the user into the database
             try
             {
-                int result = dbHelper.ExecuteNonQuery(query, parameters);
+                // Use LINQ to SQL DataContext
+                using (var context = new DataContextDataContext()) // Replace with your DataContext class name
+                {
+                    // Create and insert the new User
+                    var newUser = new User
+                    {
+                        FullName = fullName,
+                        PasswordHash = passwordHash,
+                        Role = role,
+                        Email = email,
+                        BirthDate = birthDate.Value,
+                        ProfilePicturePath = defaultProfilePicturePath,
+                        CreatedAt = DateTime.Now
+                    };
 
-                if (result > 0)
-                {
+                    context.Users.InsertOnSubmit(newUser);
+                    context.SubmitChanges();
+
+                    // If the role is Bidder or Seller, create a card for the user
+                    if (role == "Bidder" || role == "Seller")
+                    {
+                        var newCard = new Card
+                        {
+                            CardNumber = cardNumber,
+                            CardHolderName = cardHolderName,
+                            ExpiryDate = expiryDate.Value,
+                            CVV = cvv,
+                            Balance = balance,
+                            OwnerUserID = newUser.UserID // Link the card to the newly created user
+                        };
+
+                        context.Cards.InsertOnSubmit(newCard);
+                        context.SubmitChanges();
+                    }
+
+                    // Success message
                     MessageBox.Show("Registration successful!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Registration failed. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Handle errors gracefully
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private string HashPassword(string password)
+        {
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var builder = new StringBuilder();
+                foreach (var byteValue in bytes)
+                {
+                    builder.Append(byteValue.ToString("x2"));
+                }
+                return builder.ToString();
+            }
+        }
 
         private void BackToSignInButton_Click(object sender, RoutedEventArgs e)
         {

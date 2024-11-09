@@ -13,7 +13,7 @@ namespace BidUp_App.Models.Users
         public Card card { get; set; }
         public override void displayDasboard()
         {
-            var dashboard = new BidUp_App.Views.Seller.SellerDashboard();
+            var dashboard = new BidUp_App.Views.Seller.SellerDashboard(this);
             dashboard.Show();
         }
     }

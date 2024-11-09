@@ -17,6 +17,13 @@
             <StackPanel VerticalAlignment="Top" >
                 <TextBlock Text="Navigation" FontSize="18" FontWeight="Bold" Foreground="White" Margin="40,10,0,20"/>
 
+                <Button Content="Profile" 
+                        Width="160" 
+                        Height="40" 
+                        Margin="0,10" 
+                        HorizontalAlignment="Center"
+                        Click="ProfileButton_Click"/>
+                
                 <!-- See New Auctions Button -->
                 <Button Content="See New Auctions" 
                         Width="160" 
@@ -65,14 +72,14 @@
                 <Button Content="View Card" Width="160" Height="40" Margin="0,20,0,0" Click="ViewCardButton_Click"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="1" x:Name="CardInfoPanel" Visibility="Collapsed">
+            <StackPanel Grid.Column="1" x:Name="CardInfoPanel" Visibility="Hidden"  Margin="0,350,0,0">
                 <TextBlock Text="Card Details" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
                 <TextBlock Text="Card Holder:" FontWeight="Bold"/>
-                <TextBlock x:Name="CardHolderTextBlock" Text="John Doe" Margin="0,0,0,10"/>
+                <TextBlock x:Name="CardHolderTextBlock"  Margin="0,0,0,10"/>
                 <TextBlock Text="Card Number:" FontWeight="Bold"/>
-                <TextBlock x:Name="CardNumberTextBlock" Text="**** **** **** 1234" Margin="0,0,0,10"/>
+                <TextBlock x:Name="CardNumberTextBlock" Margin="0,0,0,10"/>
                 <TextBlock Text="Expiry Date:" FontWeight="Bold"/>
-                <TextBlock x:Name="ExpiryDateTextBlock" Text="12/25" Margin="0,0,0,10"/>
+                <TextBlock x:Name="ExpiryDateTextBlock" Margin="0,0,0,10"/>
             </StackPanel>
 
             <!-- Profile Picture on the Right Side with a Rounded Border -->
