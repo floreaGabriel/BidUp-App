@@ -13,7 +13,7 @@ namespace BidUp_App.Models.Users
 
         public override void displayDasboard()
         {
-            var dashboard = new BidUp_App.Views.Admin.AdminDashboard();
+            var dashboard = new BidUp_App.Views.Admin.AdminDashboard(this);
             dashboard.Show();
         }
     }

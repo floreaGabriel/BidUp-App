@@ -19,7 +19,7 @@ namespace BidUp_App.Models.Users
         public string m_password { get; set; }
         public User()
         {
-            ProfilePicturePath = "C:\\Users\\Florea\\source\\repos\\BidUp-App\\Resources\\profil2.png"; // Set the path to your default image
+            ProfilePicturePath = ""; // Set the path to your default image
         }
 
         public abstract void displayDasboard();
