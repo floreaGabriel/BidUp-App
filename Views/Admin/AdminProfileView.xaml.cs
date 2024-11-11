@@ -1,25 +1,36 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Microsoft.Win32;
-using BidUp_App.Models.Users;
-using BidUp_App.Views.Seller;
+using System.Windows.Shapes;
 
-namespace BidUp_App.Views.Bidder
+namespace BidUp_App.Views.Admin
 {
-    public partial class BidderDashboard : Window
+    /// <summary>
+    /// Interaction logic for AdminProfileView.xaml
+    /// </summary>
+    public partial class AdminProfileView : UserControl
     {
         private readonly BidUp_App.Models.Users.User _user;
         private readonly DataContextDataContext _dbContext;
 
-        public BidderDashboard(BidUp_App.Models.Users.User user)
+        public AdminProfileView(BidUp_App.Models.Users.User user)
         {
             InitializeComponent();
             _user = user;
             _dbContext = new DataContextDataContext(); // Instanțiere DataContext
             LoadProfile();
         }
+
 
         private void LoadProfile()
         {
@@ -39,34 +50,6 @@ namespace BidUp_App.Views.Bidder
             EmailTextBlock.Text = _user.m_email;
             DateOfBirthTextBlock.Text = _user.m_BirthDate.ToString("d");
             RoleTextBlock.Text = _user.m_role;
-        }
-
-        private void ProfileButton_Click(object sender, RoutedEventArgs e)
-        {
-            DisplayProfileInfo();
-        }
-
-        private void DisplayProfileInfo()
-        {
-            FullNameTextBlock.Visibility = Visibility.Visible;
-            EmailTextBlock.Visibility = Visibility.Visible;
-            DateOfBirthTextBlock.Visibility = Visibility.Visible;
-            RoleTextBlock.Visibility = Visibility.Visible;
-            CardInfoPanel.Visibility = Visibility.Hidden; // Ascunde informațiile despre card
-        }
-
-        private void SeeNewAuctionsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Instanțiază fereastra pentru vizualizarea licitațiilor
-            var viewAuctionsWindow = new ViewAuctionsWindowBidder(_user.m_userID);
-
-            // Afișează fereastra
-            viewAuctionsWindow.Show();
-        }
-
-        private void SeeLastBidsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Navigating to your last bids...");
         }
 
         private void ViewCardButton_Click(object sender, RoutedEventArgs e)
@@ -105,7 +88,7 @@ namespace BidUp_App.Views.Bidder
 
         private void ShowCardInfo()
         {
-            if (_user is BidUp_App.Models.Users.Bidder  bidder)
+            if (_user is BidUp_App.Models.Users.Bidder bidder)
             {
                 var card = _dbContext.Cards.FirstOrDefault(c => c.OwnerUserID == bidder.m_userID);
 
@@ -145,5 +128,6 @@ namespace BidUp_App.Views.Bidder
                 _dbContext.SubmitChanges();
             }
         }
+
     }
 }
